@@ -1,4 +1,6 @@
 import { Client } from '@notionhq/client';
+import db from './db';
+
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	// MY_KV_NAMESPACE: KVNamespace;
@@ -17,11 +19,19 @@ export default {
 			auth: env.NOTION_TOKEN,
 		});
 
-		const databaseId = '28364a0f0478447baa0d3f9fe663c0ce'; // we'll be provided this value via Letterbolt's authed user
-		const response = await notion.databases.retrieve({ database_id: databaseId });
+		// routing
 
-		return new Response(JSON.stringify(response), {
-			headers: { 'content-type': 'application/json;charset=UTF-8' },
-		});
+		switch (true) {
+			case request.url.endsWith('/db/'): {
+				return new Response(
+					JSON.stringify(
+						await db.fetch(request, ctx, notion, '28364a0f0478447baa0d3f9fe663c0ce')
+					)
+				);
+			}
+			default: {
+				return new Response('Hello world!');
+			}
+		}
 	},
 };
