@@ -1,5 +1,6 @@
 import { Client } from '@notionhq/client';
-import db from './db';
+import dbRenderer from './db-render';
+import pageRenderer from './page-render';
 
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -18,16 +19,24 @@ export default {
 		const notion = new Client({
 			auth: env.NOTION_TOKEN,
 		});
-
-		// routing
-
+		/* Routing
+		 * /db/ -call db.fetch with existing Client and ID from request (todo)
+		 * /page/  call page.fetch with existing Client and ID from request (todo)
+		 */
 		switch (true) {
+			case request.url.endsWith('/page/'): {
+				const id = 'd4b16510ac94464594077c39c99457bb'; // placeholder ID (we'll get ID from the OG POST req)
+				if (id) {
+					return new Response(JSON.stringify(await pageRenderer.fetch(notion, id)));
+				}
+				return new Response('No ID provided', { status: 400 });
+			}
 			case request.url.endsWith('/db/'): {
-				return new Response(
-					JSON.stringify(
-						await db.fetch(request, ctx, notion, '28364a0f0478447baa0d3f9fe663c0ce')
-					)
-				);
+				const id = '28364a0f0478447baa0d3f9fe663c0ce';
+				if (id) {
+					return new Response(JSON.stringify(await dbRenderer.fetch(notion, id)));
+				}
+				return new Response('No ID provided', { status: 400 });
 			}
 			default: {
 				return new Response('Hello world!');

@@ -3,8 +3,6 @@ import { GetDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
 
 export default {
 	async fetch(
-		request: Request,
-		ctx: ExecutionContext,
 		notion: Client,
 		id: string
 	): Promise<GetDatabaseResponse> {
