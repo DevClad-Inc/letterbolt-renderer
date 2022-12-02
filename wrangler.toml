@@ -2,7 +2,5 @@ name = "letterbolt-renderer"
 main = "src/index.ts"
 compatibility_date = "2022-11-22"
 
-account_id = "e709dd11aceae4e019a972087794a057"
-
 [vars]
-# NOTION_TOKEN - secret
+# NOTION_TOKEN - secret (via  `wrangler secret put`)
