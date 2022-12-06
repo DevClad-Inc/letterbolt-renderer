@@ -6,6 +6,7 @@ import {
 } from '@notionhq/client/build/src/api-endpoints';
 
 /* todo: cache the req using swr */
+/* todo: POST requests to keep content in sync when using Letterbolt interface */
 
 const fetchPageProps = async (notion: Client, id: string): Promise<GetPageResponse> => {
 	const response = await notion.pages.retrieve({ page_id: id });
@@ -26,6 +27,9 @@ export default {
 		notion: Client,
 		id: string
 	): Promise<(PartialBlockObjectResponse | BlockObjectResponse)[]> {
+
+		
+
 		const blockResp = await notion.blocks.retrieve({ block_id: id });
 		const listBlockResponse = await notion.blocks.children.list({ block_id: id });
 		const blockChildren = listBlockResponse.results;

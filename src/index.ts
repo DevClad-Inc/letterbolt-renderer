@@ -2,7 +2,6 @@ import { Client } from '@notionhq/client';
 import dbRenderer from './db-render';
 import pageRenderer from './page-render';
 
-
 /*
 *  get page as a block via notion.blocks.children.list and return the results
 *  check for has_children property; traverse those blocks, append, and repeat.
@@ -10,6 +9,12 @@ import pageRenderer from './page-render';
 *  fetch page as a page to get properties and use them for SEO
 
 */
+
+declare global {
+	interface CacheStorage {
+		default: CacheStorage;
+	}
+}
 
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -23,6 +28,10 @@ export interface Env {
 	NOTION_TOKEN: string;
 }
 
+export type optionType = 'complete' | 'main';
+// complete renders every single child block if has_children is true
+// main is for the main page that contains children (blog posts) and renders only the titles of these children + ID
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const notion = new Client({
@@ -32,11 +41,31 @@ export default {
 		 * /db/ -call db.fetch with existing Client and ID from request (todo)
 		 * /page/  call page.fetch with existing Client and ID from request (todo)
 		 */
+
+		const cacheURL = new URL(request.url);
+		// const cachePath = cacheURL.pathname;
+
+		const cacheKey = new Request(cacheURL, request);
+		const cache = caches.default;
+
+		const cachedResponse = await cache.match(cacheKey);
+
+		if (cachedResponse) {
+			console.log('cache hit');
+			return cachedResponse;
+		}
+
 		switch (true) {
 			case request.url.endsWith('/page/'): {
 				const id = 'd4b16510ac94464594077c39c99457bb'; // placeholder ID (we'll get ID from the OG POST req)
 				if (id) {
-					return new Response(JSON.stringify(await pageRenderer.fetch(notion, id)));
+					const response = new Response(
+						JSON.stringify(await pageRenderer.fetch(notion, id))
+					);
+					response.headers.set('content-type', 'application/json');
+					response.headers.append('Cache-Control', 'max-age=3600');
+					response.headers.append('Cache-Control', 'stale-while-revalidate=86400');
+					return response;
 				}
 				return new Response('No ID provided', { status: 400 });
 			}
