@@ -13,6 +13,7 @@ import pageRenderer from './page-render';
 declare global {
 	interface CacheStorage {
 		default: CacheStorage;
+		put: (key: Request, value: Response) => Promise<void>;
 	}
 }
 
@@ -65,6 +66,10 @@ export default {
 					response.headers.set('content-type', 'application/json');
 					response.headers.append('Cache-Control', 'max-age=3600');
 					response.headers.append('Cache-Control', 'stale-while-revalidate=86400');
+
+					// wait until response is put into cache
+					ctx.waitUntil(cache.put(cacheKey, response.clone()));
+
 					return response;
 				}
 				return new Response('No ID provided', { status: 400 });
