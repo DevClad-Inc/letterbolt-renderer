@@ -2,6 +2,15 @@ import { Client } from '@notionhq/client';
 import dbRenderer from './db-render';
 import pageRenderer from './page-render';
 
+
+/*
+*  get page as a block via notion.blocks.children.list and return the results
+*  check for has_children property; traverse those blocks, append, and repeat.
+*  if no children, return the block
+*  fetch page as a page to get properties and use them for SEO
+
+*/
+
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	// MY_KV_NAMESPACE: KVNamespace;
