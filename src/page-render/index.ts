@@ -1,12 +1,19 @@
 import { Client } from '@notionhq/client';
 import {
 	BlockObjectResponse,
+	GetPageResponse,
 	PartialBlockObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
-import { Object } from './types';
 
-const checkHasChildren = (block: any) => {
-	if (block.has_children) {
+/* todo: cache the req using swr */
+
+const fetchPageProps = async (notion: Client, id: string): Promise<GetPageResponse> => {
+	const response = await notion.pages.retrieve({ page_id: id });
+	return response;
+};
+
+const checkHasChildren = (block: PartialBlockObjectResponse | BlockObjectResponse) => {
+	if (typeof (block as BlockObjectResponse).has_children === 'boolean') {
 		return true;
 	}
 	return false;
@@ -17,7 +24,6 @@ export default {
 		notion: Client,
 		id: string
 	): Promise<(PartialBlockObjectResponse | BlockObjectResponse)[]> {
-		// const response = await notion.pages.retrieve({ page_id: id }); // fetch as page
 		const blockResp = await notion.blocks.retrieve({ block_id: id });
 		const listBlockResponse = await notion.blocks.children.list({ block_id: id });
 		const blockChildren = listBlockResponse.results;
@@ -31,7 +37,6 @@ export default {
 				blockChildren.push(...listBlockResponse.results);
 			}
 		}
-
 		return blockChildren;
 	},
 };
