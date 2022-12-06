@@ -13,10 +13,12 @@ const fetchPageProps = async (notion: Client, id: string): Promise<GetPageRespon
 };
 
 const checkHasChildren = (block: PartialBlockObjectResponse | BlockObjectResponse) => {
-	if (typeof (block as BlockObjectResponse).has_children === 'boolean') {
-		return true;
+	if ('has_children' in block) {
+		if (block.has_children ? block.has_children : false) {
+			return true;
+		}
+		return false;
 	}
-	return false;
 };
 
 export default {
