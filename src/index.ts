@@ -14,6 +14,7 @@ declare global {
 	interface CacheStorage {
 		default: CacheStorage;
 		put: (key: Request, value: Response) => Promise<void>;
+		delete: (cacheName: string) => Promise<boolean>;
 	}
 }
 
@@ -44,38 +45,40 @@ export default {
 		 */
 
 		const cacheURL = new URL(request.url);
-		// const cachePath = cacheURL.pathname;
-
-		const cacheKey = new Request(cacheURL, request);
-		const cache = caches.default;
-
-		const cachedResponse = await cache.match(cacheKey);
-
-		if (cachedResponse) {
-			console.log('cache hit');
-			return cachedResponse;
-		}
 
 		switch (true) {
 			case request.url.endsWith('/page/'): {
 				const id = 'd4b16510ac94464594077c39c99457bb'; // placeholder ID (we'll get ID from the OG POST req)
 				if (id) {
+
+					const cacheKey = new Request(cacheURL, request);
+					const cache = caches.default;
+					const cachedResponse = await cache.match(cacheKey);
+
+					if (cachedResponse) {
+						ctx.waitUntil( (async () => {
+							const response = new Response(
+								JSON.stringify(await pageRenderer.fetch(notion, id))
+							);
+							response.headers.set('content-type', 'application/json');
+							response.headers.set('Cache-Control', 'stale-while-revalidate');
+							const newClone = response.clone();
+							await cache.put(cacheKey, newClone);
+						})() );
+						return cachedResponse;
+					}
 					const response = new Response(
 						JSON.stringify(await pageRenderer.fetch(notion, id))
 					);
 					response.headers.set('content-type', 'application/json');
-					response.headers.append('Cache-Control', 'max-age=3600');
-					response.headers.append('Cache-Control', 'stale-while-revalidate=86400');
-
-					// wait until response is put into cache
+					response.headers.set('Cache-Control', 'stale-while-revalidate');
 					ctx.waitUntil(cache.put(cacheKey, response.clone()));
-
 					return response;
 				}
 				return new Response('No ID provided', { status: 400 });
 			}
 			case request.url.endsWith('/db/'): {
-				const id = '28364a0f0478447baa0d3f9fe663c0ce';
+				const id = '28364a0f0478447baa0d3f9fe663c0ce'; // placeholder ID for testing right now
 				if (id) {
 					return new Response(JSON.stringify(await dbRenderer.fetch(notion, id)));
 				}
