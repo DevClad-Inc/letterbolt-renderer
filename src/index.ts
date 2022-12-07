@@ -55,22 +55,28 @@ export default {
 				if (!id) {
 					return new Response('No ID provided', { status: 400 });
 				}
-				const response = new Response(JSON.stringify(await pageRenderer.fetch(notion, id)));
 				if (!cachedResponse) {
+					const response = new Response(
+						JSON.stringify(await pageRenderer.fetch(notion, id))
+					);
 					response.headers.set('content-type', 'application/json');
 					response.headers.set('Cache-Control', 'stale-while-revalidate');
 					ctx.waitUntil(cache.put(cacheKey, response.clone()));
 					return response;
+				} else {
+					ctx.waitUntil(
+						(async () => {
+							const response = new Response(
+								JSON.stringify(await pageRenderer.fetch(notion, id))
+							);
+							response.headers.set('content-type', 'application/json');
+							response.headers.set('Cache-Control', 'stale-while-revalidate');
+							const newClone = response.clone();
+							await cache.put(cacheKey, newClone);
+						})()
+					);
+					return cachedResponse;
 				}
-				ctx.waitUntil(
-					(async () => {
-						response.headers.set('content-type', 'application/json');
-						response.headers.set('Cache-Control', 'stale-while-revalidate');
-						const newClone = response.clone();
-						await cache.put(cacheKey, newClone);
-					})()
-				);
-				return cachedResponse;
 			}
 			case request.url.endsWith('/db/'): {
 				const id = '28364a0f0478447baa0d3f9fe663c0ce'; // placeholder ID for testing right now
