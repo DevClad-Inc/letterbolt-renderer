@@ -45,37 +45,32 @@ export default {
 		 */
 
 		const cacheURL = new URL(request.url);
+		const cacheKey = new Request(cacheURL, request);
+		const cache = caches.default;
+		const cachedResponse = await cache.match(cacheKey);
 
 		switch (true) {
 			case request.url.endsWith('/page/'): {
 				const id = 'd4b16510ac94464594077c39c99457bb'; // placeholder ID (we'll get ID from the OG POST req)
-				if (id) {
-
-					const cacheKey = new Request(cacheURL, request);
-					const cache = caches.default;
-					const cachedResponse = await cache.match(cacheKey);
-
-					if (cachedResponse) {
-						ctx.waitUntil( (async () => {
-							const response = new Response(
-								JSON.stringify(await pageRenderer.fetch(notion, id))
-							);
-							response.headers.set('content-type', 'application/json');
-							response.headers.set('Cache-Control', 'stale-while-revalidate');
-							const newClone = response.clone();
-							await cache.put(cacheKey, newClone);
-						})() );
-						return cachedResponse;
-					}
-					const response = new Response(
-						JSON.stringify(await pageRenderer.fetch(notion, id))
-					);
+				if (!id) {
+					return new Response('No ID provided', { status: 400 });
+				}
+				const response = new Response(JSON.stringify(await pageRenderer.fetch(notion, id)));
+				if (!cachedResponse) {
 					response.headers.set('content-type', 'application/json');
 					response.headers.set('Cache-Control', 'stale-while-revalidate');
 					ctx.waitUntil(cache.put(cacheKey, response.clone()));
 					return response;
 				}
-				return new Response('No ID provided', { status: 400 });
+				ctx.waitUntil(
+					(async () => {
+						response.headers.set('content-type', 'application/json');
+						response.headers.set('Cache-Control', 'stale-while-revalidate');
+						const newClone = response.clone();
+						await cache.put(cacheKey, newClone);
+					})()
+				);
+				return cachedResponse;
 			}
 			case request.url.endsWith('/db/'): {
 				const id = '28364a0f0478447baa0d3f9fe663c0ce'; // placeholder ID for testing right now
