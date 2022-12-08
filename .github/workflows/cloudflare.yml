@@ -8,15 +8,13 @@ jobs:
     name: Deploy
     steps:
       - uses: actions/checkout@v2
-      - name: install dependencies
-        run: 'npm install'
-      - name: install notion
-        run: 'npm install @notionhq/client'
-      - uses: actions/checkout@v2
       - name: Publish
         uses: cloudflare/wrangler-action@2.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
+          precommands: |
+            npm install
+            npm install @notionhq/client
           secrets: |
             NOTION_TOKEN
         env:
