@@ -10,6 +10,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: install dependencies
         run: 'npm install'
+      - name: install notion
+        run: 'npm install @notionhq/client'
       - uses: actions/checkout@v2
       - name: Publish
         uses: cloudflare/wrangler-action@2.0.0
