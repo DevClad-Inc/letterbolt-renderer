@@ -12,9 +12,13 @@ jobs:
         uses: actions/setup-node@v2.4.1
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies with NPM
+      - name: Install dependencies on ACT
+        if: ${{ env.ACT }}
         run: |
-          npm install
+          npm i -g yarn
+          sudo apt-get update
+      - name: Install dependencies on Ubuntu
+        run: yarn install --frozen-lockfile
       - uses: actions/checkout@v2
       - name: Publish
         uses: cloudflare/wrangler-action@2.0.0
