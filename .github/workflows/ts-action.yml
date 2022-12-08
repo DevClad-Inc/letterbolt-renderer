@@ -1,4 +1,4 @@
-name: TS Action
+name: Cloudflare Worker
 
 on: [push, pull_request]
 
@@ -7,6 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2.4.1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies with NPM
+        run: |
+          npm install
       - uses: actions/checkout@v2
       - name: Publish
         uses: cloudflare/wrangler-action@2.0.0
