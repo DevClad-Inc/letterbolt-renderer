@@ -14,7 +14,6 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           precommands: |
             npm install
-            npm install @notionhq/client
           secrets: |
             NOTION_TOKEN
         env:
