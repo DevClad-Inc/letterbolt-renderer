@@ -7,12 +7,12 @@ import {
 
 /* todo: POST requests to keep content in sync when using Letterbolt interface */
 
-const fetchPageProps = async (notion: Client, id: string): Promise<GetPageResponse> => {
+export const fetchPageProps = async (notion: Client, id: string): Promise<GetPageResponse> => {
 	const response = await notion.pages.retrieve({ page_id: id });
 	return response;
 };
 
-const checkHasChildren = (block: PartialBlockObjectResponse | BlockObjectResponse) => {
+export const checkHasChildren = (block: PartialBlockObjectResponse | BlockObjectResponse) => {
 	if ('has_children' in block) {
 		if (block.has_children ? block.has_children : false) {
 			return true;

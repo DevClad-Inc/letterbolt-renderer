@@ -1,5 +1,6 @@
 import { Client } from '@notionhq/client';
 import dbRenderer from './db-render';
+import { fetchPageProps } from './page-render';
 import pageRenderer from './page-render';
 
 /*
@@ -52,6 +53,34 @@ export default {
 		switch (true) {
 			case request.url.endsWith('/page/'): {
 				const id = 'd4b16510ac94464594077c39c99457bb'; // placeholder ID (we'll get ID from the OG POST req)
+				const url = new URL(request.url);
+				const option = url.searchParams.get('option');
+				if (option === 'noRender') {
+					console.log('noRender');
+					if (!cachedResponse) {
+						const response = new Response(
+							JSON.stringify(await fetchPageProps(notion, id))
+						);
+						response.headers.set('content-type', 'application/json');
+						response.headers.set('Cache-Control', 'stale-while-revalidate');
+						ctx.waitUntil(cache.put(cacheKey, response.clone()));
+						return response;
+					} else {
+						ctx.waitUntil(
+							(async () => {
+								const response = new Response(
+									JSON.stringify(await fetchPageProps(notion, id))
+								);
+								response.headers.set('content-type', 'application/json');
+								response.headers.set('Cache-Control', 'stale-while-revalidate');
+								const newClone = response.clone();
+								await cache.put(cacheKey, newClone);
+							})()
+						);
+						return cachedResponse;
+					}
+				}
+
 				if (!id) {
 					return new Response('No ID provided', { status: 400 });
 				}
