@@ -31,7 +31,7 @@ export interface Env {
 	NOTION_TOKEN: string;
 }
 
-export type optionType = 'complete' | 'main';
+export type pageOptionType = 'complete' | 'main';
 // complete renders every single child block if has_children is true
 // main is for the main page that contains children (blog posts) and renders only the titles of these children + ID
 
@@ -49,14 +49,18 @@ export default {
 		const cacheKey = new Request(cacheURL, request);
 		const cache = caches.default;
 		const cachedResponse = await cache.match(cacheKey);
+		const { searchParams } = new URL(request.url);
+		const pageOption = searchParams.get('option') as pageOptionType;
 
 		switch (true) {
-			case request.url.endsWith('/page/'): {
+			case request.url.includes('/page/') ||
+				request.url.includes(`/page?option=${pageOption}`): {
 				const id = 'd4b16510ac94464594077c39c99457bb'; // placeholder ID (we'll get ID from the OG POST req)
-				const url = new URL(request.url);
-				const option = url.searchParams.get('option');
-				if (option === 'noRender') {
-					console.log('noRender');
+				if (!id) {
+					return new Response('No ID provided', { status: 400 });
+				}
+				if (pageOption === 'main') {
+					console.log('main');
 					if (!cachedResponse) {
 						const response = new Response(
 							JSON.stringify(await fetchPageProps(notion, id))
@@ -79,10 +83,6 @@ export default {
 						);
 						return cachedResponse;
 					}
-				}
-
-				if (!id) {
-					return new Response('No ID provided', { status: 400 });
 				}
 				if (!cachedResponse) {
 					const response = new Response(
